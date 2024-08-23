@@ -1,0 +1,32 @@
+name: Stage and Prod Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_to:
+        description: 'Choose deployment target'
+        required: true
+        type: choice
+        options: 
+          - stage
+          - prod
+          - both
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Stage
+        if: ${{ github.event.inputs.deploy_to == 'stage' || github.event.inputs.deploy_to == 'both' }}
+        run: |
+          echo "Deploying to Stage Environment"
+          # Add your deployment script/command for stage here
+
+      - name: Deploy to Prod
+        if: ${{ github.event.inputs.deploy_to == 'prod' || github.event.inputs.deploy_to == 'both' }}
+        run: |
+          echo "Deploying to Prod Environment"
+          # Add your deployment script/command for prod here
