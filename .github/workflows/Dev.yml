@@ -15,3 +15,12 @@ jobs:
 
       - name: Build Docker Image
         run: echo Building Docker Image!
+      - name: Push Docker Image
+        run: echo Building Docker Image!
+  DeployToDev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: echo Deploying to Dev
