@@ -22,10 +22,11 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t my-app:latest .
-          docker tag my-app:latest my-docker-registry/my-app:latest
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin my-docker-registry
-          docker push my-docker-registry/my-app:latest
+          echo "Building docker image"
+          # docker build -t my-app:latest .
+          # docker tag my-app:latest my-docker-registry/my-app:latest
+          # echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin my-docker-registry
+          # docker push my-docker-registry/my-app:latest
 
       - name: Deploy to Dev Environment
         run: |
