@@ -1,12 +1,12 @@
 name: Dev Workflow
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [closed]
-    branches:
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   types: [closed]
+  #   branches:
       - main  # Adjust as needed
 
 jobs:
