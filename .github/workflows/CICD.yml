@@ -38,7 +38,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Build Docker Image
         run: echo Building Docker Image!
 
