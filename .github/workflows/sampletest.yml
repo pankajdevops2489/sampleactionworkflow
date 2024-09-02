@@ -21,6 +21,7 @@ jobs:
   automerge:
     runs-on: ubuntu-latest
     needs: [run_on_approval]
+    environment: staging-test
     steps:
       - id: automerge
         name: Automerge Pull Request
