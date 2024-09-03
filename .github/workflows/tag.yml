@@ -2,7 +2,7 @@ name: Build and Deploy Che-dashboard
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
 
 env:
   REGISTRY: artifactory-mb.harman.com:5036
