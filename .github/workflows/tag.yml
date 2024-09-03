@@ -2,7 +2,7 @@ name: Build and Deploy Che-dashboard
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
 
 env:
   REGISTRY: artifactory-mb.harman.com:5036
@@ -10,48 +10,98 @@ env:
   REPO_NAME: environment-configuration-space
   TO_BRANCH: master
 
-jobs:   
+jobs:
+  build-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.set-output.outputs.image-tag }}
+    steps:
+    - name: Build Image Tag
+      id: set-output
+      run: |
+        IMAGE_TAG=$(date +'%Y%m%d')_${{ github.ref_name }}_${{ github.run_number }}
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+        echo "::set-output name=image-tag::${IMAGE_TAG}"
+      
+    - name: Upload Image Tag as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: image-tag
+        path: |
+          .env
+
   build-push-docker-image:
+    needs: build-tag
     runs-on: ubuntu-latest
     steps:
-    - name: Build Image Tag 
+    - name: Download Image Tag Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: image-tag
+
+    - name: Load Image Tag from Artifact
+      id: load-tag
       run: |
-        IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+        export $(grep -v '^#' .env | xargs)
+        echo "IMAGE_TAG=${IMAGE_TAG}"
+
     - name: Build Docker Image and push to Registry
       run: |
-        echo ${{env.IMAGE_TAG}}
+        echo $IMAGE_TAG
 
   deploy_to_dev:
+    needs: build-tag
     runs-on: ubuntu-latest
     steps:
-      - name: Build Image Tag
-        run: |
-            IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
-            echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+    - name: Download Image Tag Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: image-tag
 
-      - name: Build Docker Image and dpush to Registry
-        run: |
-          echo ${{env.IMAGE_TAG}}
+    - name: Load Image Tag from Artifact
+      id: load-tag
+      run: |
+        export $(grep -v '^#' .env | xargs)
+        echo "IMAGE_TAG=${IMAGE_TAG}"
+
+    - name: Build Docker Image and push to Registry
+      run: |
+        echo $IMAGE_TAG
+
   deploy_to_stage:
+    needs: build-tag
     runs-on: ubuntu-latest
     steps:
-      - name: Build Image Tag
-        run: |
-            IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
-            echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
-      - name: Deploy to Stage Environment
-        run: |
-          echo ${{env.IMAGE_TAG}}
-          
+    - name: Download Image Tag Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: image-tag
+
+    - name: Load Image Tag from Artifact
+      id: load-tag
+      run: |
+        export $(grep -v '^#' .env | xargs)
+        echo "IMAGE_TAG=${IMAGE_TAG}"
+
+    - name: Deploy to Stage Environment
+      run: |
+        echo $IMAGE_TAG
+
   deploy_to_prod:
+    needs: build-tag
     runs-on: ubuntu-latest
     steps:
-      - name: Build Image Tag
-        run: |
-            IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
-            echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
-    
-      - name: Deploy to Stage Environment
-        run: |
-          echo ${{env.IMAGE_TAG}}
+    - name: Download Image Tag Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: image-tag
+
+    - name: Load Image Tag from Artifact
+      id: load-tag
+      run: |
+        export $(grep -v '^#' .env | xargs)
+        echo "IMAGE_TAG=${IMAGE_TAG}"
+
+    - name: Deploy to Production Environment
+      run: |
+        echo $IMAGE_TAG
