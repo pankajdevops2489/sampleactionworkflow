@@ -1,0 +1,57 @@
+name: Build and Deploy Che-dashboard
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: artifactory-mb.harman.com:5036
+  BITBUCKET_PROJECT: SPACE  
+  REPO_NAME: environment-configuration-space
+  TO_BRANCH: master
+
+jobs:   
+  build-push-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build Image Tag 
+      run: |
+        IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+    - name: Build Docker Image and push to Registry
+      run: |
+        echo ${{env.IMAGE_TAG}}
+
+  deploy_to_dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Image Tag
+        run: |
+            IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
+            echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+
+      - name: Build Docker Image and dpush to Registry
+        run: |
+          echo ${{env.IMAGE_TAG}}
+  deploy_to_stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Image Tag
+        run: |
+            IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
+            echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+      - name: Deploy to Stage Environment
+        run: |
+          echo ${{env.IMAGE_TAG}}
+          
+  deploy_to_prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Image Tag
+        run: |
+            IMAGE_TAG=$(date +'%Y%m%d')_${{github.ref_name}}_${{ github.run_number}}
+            echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+    
+      - name: Deploy to Stage Environment
+        run: |
+          echo ${{env.IMAGE_TAG}}
