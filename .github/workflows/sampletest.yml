@@ -16,7 +16,9 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}  # Check out the code from the PR
 
     - name: List Files
-      run: ls -la  # List all files and directories in long format
+      run: |
+        ls -la  # List all files and directories in long format
+        echo ${{ github.event.pull_request.base.ref }}
       
   automerge:
     runs-on: ubuntu-latest
