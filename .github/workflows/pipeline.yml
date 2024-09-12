@@ -23,7 +23,7 @@ jobs:
   build-push-docker-image:
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: ${{ github.event.pull_request.base.ref == 'dev' || github.event.pull_request.base.ref == 'stage' || github.event.pull_request.base.ref == 'prod' }}
+    if: ${{ github.event.pull_request.base.ref == 'dev'}}
 
     steps:
       - name: Checkout Source Code
