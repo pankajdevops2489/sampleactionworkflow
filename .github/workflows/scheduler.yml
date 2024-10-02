@@ -1,0 +1,24 @@
+name: Scheduled Deploy to Production
+
+on:
+  schedule:
+    # This cron syntax schedules the job to run every day at midnight UTC
+    - cron: '* * * * *'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code from develop branch
+        uses: actions/checkout@v4
+        with:
+          ref: newtest
+
+      - name: Deploy to Production
+        run: |
+          ls
+          # Add your deployment commands here
+          echo "Deploying to production environment..."
+          # Example: scp or rsync to your server
+          # scp -r ./build user@your-server:/path/to/deploy
