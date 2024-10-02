@@ -2,8 +2,7 @@ name: Scheduled Deploy to Production
 
 on:
   schedule:
-    # This cron syntax schedules the job to run every day at midnight UTC
-    - cron: '* * * * *'
+    - cron: "* * * * *"
 
 jobs:
   deploy:
