@@ -19,16 +19,23 @@ jobs:
         with:
           ref: 'main'  # Replace with your release branch name
 
-      - name: Get Approved Pull Requests
-        id: get_prs
+      - name: List Open Approved PRs
+        id: list_prs
         run: |
-          echo "::set-output name=pr_refs::$(gh pr list --state merged --base release-branch-name --json headRef --jq '.[].headRef' | tr '\n' ' ')"
+          echo "Listing open approved PRs..."
+          prs=$(gh pr list --state open --json number,title,headRef,merged --jq '.[] | select(.merged == false) | "\(.number): \(.title) (\(.headRef))"')
+          echo "$prs"
+          echo "::set-output name=prs::$prs"
 
-      - name: Checkout Approved PRs
+      - name: Checkout or Cherry-Pick PRs
+        id: cherry_pick
         run: |
-          pr_refs=${{ steps.get_prs.outputs.pr_refs }}
-          for pr_ref in $pr_refs; do
-            git fetch origin $pr_ref && git checkout $pr_ref
+          prs="${{ steps.list_prs.outputs.prs }}"
+          IFS=$'\n'
+          for pr in $prs; do
+            pr_ref=$(echo "$pr" | awk -F ' ' '{print $NF}')  # Extract the headRef
+            echo "Cherry-picking changes from $pr_ref..."
+            git fetch origin $pr_ref && git cherry-pick $pr_ref || { echo "Cherry-pick failed for $pr_ref"; exit 1; }
           done
 
       - name: List Files
