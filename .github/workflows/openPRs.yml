@@ -6,7 +6,7 @@ on:
       confirm:
         description: 'Do you want to run this pipeline? (yes/no)'
         required: true
-        default: 'no'
+        default: 'yes'
 
 jobs:
   create-branch:
@@ -19,8 +19,15 @@ jobs:
         with:
           ref: 'main'  # Replace with your release branch name
 
+      - name: Set up GitHub CLI
+        run: |
+          echo "Setting up GitHub CLI"
+          sudo apt-get install gh -y  # Install GitHub CLI if not already installed
+
       - name: List Open Approved PRs
         id: list_prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Listing open approved PRs..."
           prs=$(gh pr list --state open --json number,title,headRef,merged --jq '.[] | select(.merged == false) | "\(.number): \(.title) (\(.headRef))"')
