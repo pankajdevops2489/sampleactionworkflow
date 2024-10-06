@@ -44,7 +44,8 @@ jobs:
           fi
           IFS=$'\n'
           for pr in $prs; do
-            pr_ref=$(echo "$pr" | awk -F ' ' '{print $NF}')  # Extract the headRefName
+            # Extracting the branch name correctly
+            pr_ref=$(echo "$pr" | awk -F ' ' '{print $NF}' | tr -d '()')  # Remove parentheses
             echo "Cherry-picking changes from $pr_ref..."
             git fetch origin "$pr_ref" && git cherry-pick "$pr_ref" || { echo "Cherry-pick failed for $pr_ref"; exit 1; }
           done
