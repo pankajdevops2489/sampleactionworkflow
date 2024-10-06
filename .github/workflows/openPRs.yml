@@ -6,7 +6,7 @@ on:
       confirm:
         description: 'Do you want to run this pipeline? (yes/no)'
         required: true
-        default: 'yes'
+        default: 'no'
 
 jobs:
   create-branch:
@@ -32,12 +32,12 @@ jobs:
           echo "Listing open approved PRs..."
           prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.number): \(.title) (\(.headRefName))"')
           echo "$prs"
-          echo "::set-output name=prs::$prs"
+          echo "prs=$prs" >> $GITHUB_ENV  # Use environment files instead of set-output
 
       - name: Checkout or Cherry-Pick PRs
         id: cherry_pick
         run: |
-          prs="${{ steps.list_prs.outputs.prs }}"
+          prs="${{ env.prs }}"  # Use the environment variable
           if [ -z "$prs" ]; then
             echo "No open approved PRs found."
             exit 0  # Exit gracefully if no PRs
@@ -46,7 +46,7 @@ jobs:
           for pr in $prs; do
             pr_ref=$(echo "$pr" | awk -F ' ' '{print $NF}')  # Extract the headRefName
             echo "Cherry-picking changes from $pr_ref..."
-            git fetch origin $pr_ref && git cherry-pick $pr_ref || { echo "Cherry-pick failed for $pr_ref"; exit 1; }
+            git fetch origin "$pr_ref" && git cherry-pick "$pr_ref" || { echo "Cherry-pick failed for $pr_ref"; exit 1; }
           done
 
       - name: List Files
