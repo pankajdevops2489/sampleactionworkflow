@@ -36,34 +36,42 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Listing open approved PRs..."
-          prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.headRefName) (\(.reviews[0].commit.oid))"')
+          prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.headRefName); \(.reviews[0].commit.oid)"')
           if [ -z "$prs" ]; then
             echo "No open approved PRs found."
-            echo "prs=" >> $GITHUB_ENV  # Set an empty value if no PRs found
+            echo "branches=" >> $GITHUB_ENV  # Set an empty value if no PRs found
+            echo "oids=" >> $GITHUB_ENV
           else
-            echo "$prs" > prs_list.txt  # Store PRs in a temporary file
-            echo "prs=$(cat prs_list.txt | tr '\n' ' ' | sed 's/ *$//')" >> $GITHUB_ENV  # Set prs environment variable without trailing spaces
-            echo "List of PRs: $(cat prs_list.txt)"
+            branches=$(echo "$prs" | cut -d ';' -f 1 | tr '\n' ';' | sed 's/;$//')  # Extract branch names
+            oids=$(echo "$prs" | cut -d ';' -f 2 | tr '\n' ';' | sed 's/;$//')  # Extract OIDs
+            echo "branches=${branches}" >> $GITHUB_ENV
+            echo "oids=${oids}" >> $GITHUB_ENV
+            echo "List of branches: ${branches}"
+            echo "List of OIDs: ${oids}"
           fi
 
       - name: Checkout or Cherry-Pick PRs
         id: cherry_pick
         run: |
-          prs="${{ env.prs }}"  # Use the environment variable
-          if [ -z "$prs" ]; then
+          branches="${{ env.branches }}"  # Use the environment variable for branches
+          oids="${{ env.oids }}"  # Use the environment variable for OIDs
+          if [ -z "$branches" ]; then
             echo "No open approved PRs found."
             exit 0  # Exit gracefully if no PRs
           fi
-          IFS=$'\n'  # Use newline as a delimiter
-          for pr in $prs; do
-            ls
-            pr_branch=$(echo "$pr" | awk -F ' ' '{print $1}' | tr -d '()')  # Extract the headRefName
-            pr_oid=$(echo "$pr" | awk -F ' ' '{print $(NF)}' | tr -d '()')  # Extract the commit OID
+
+          IFS=';'  # Use semicolon as a delimiter for both branches and OIDs
+          branch_array=(${branches})
+          oid_array=(${oids})
+
+          for i in "${!branch_array[@]}"; do
+            pr_branch=${branch_array[$i]}
+            pr_oid=${oid_array[$i]}
             echo "Fetching branch $pr_branch..."
             git fetch origin "$pr_branch"  # Fetch the branch
-            git fetch origin "$pr_oid"  # Ensure the commit is fetched
             echo "Cherry-picking changes from commit $pr_oid..."
             git cherry-pick "$pr_oid" || { echo "Cherry-pick failed for commit $pr_oid"; exit 1; }
+            ls
           done
 
       - name: List Files
