@@ -1,0 +1,78 @@
+name: Manual Actions Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Do you want to run this pipeline? (yes/no)'
+        required: true
+        default: 'yes'
+
+jobs:
+  create-branch:
+    if: inputs.confirm == 'yes'  # Proceed only if 'yes' is selected
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Release Branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'release'  # Replace with your actual release branch name
+          fetch-depth: 0  # Fetch all history for all branches
+
+      - name: Set up GitHub CLI
+        run: |
+          echo "Setting up GitHub CLI"
+          sudo apt-get install gh -y  # Install GitHub CLI if not already installed
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Create New Integration Branch
+        id: create_branch
+        run: |
+          today=$(date +%d%m%Y)  # Get today's date in ddmmyyyy format
+          new_branch="integration-$today"
+          git checkout -b "$new_branch"  # Create and switch to the new branch
+          echo "New branch created: $new_branch"
+          echo "new_branch=$new_branch" >> $GITHUB_ENV  # Store the new branch name in an environment variable
+
+      - name: List Open Approved PRs
+        id: list_prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
+        run: |
+          echo "Listing open approved PRs..."
+          prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.headRefName)"')
+          if [ -z "$prs" ]; then
+            echo "No open approved PRs found."
+            echo "branches=" >> $GITHUB_ENV  # Set an empty value if no PRs found
+          else
+            branches=$(echo "$prs" | tr '\n' ';' | sed 's/;$//')  # Extract branch names
+            echo "branches=${branches}" >> $GITHUB_ENV
+            echo "List of branches: ${branches}"
+          fi
+
+      - name: Merge Approved PRs into New Branch
+        run: |
+          branches="${{ env.branches }}"  # Use the environment variable for branches
+          if [ -z "$branches" ]; then
+            echo "No open approved PRs found."
+            exit 0  # Exit gracefully if no PRs
+          fi
+          
+          IFS=';'  # Use semicolon as a delimiter for branches
+          branch_array=(${branches})
+
+          for pr_branch in "${branch_array[@]}"; do
+            echo "Fetching branch $pr_branch..."
+            git fetch origin "$pr_branch"  # Fetch the branch
+            echo "Merging changes from $pr_branch into ${{ env.new_branch }}..."
+            git merge "$pr_branch" || { echo "Merge failed for branch $pr_branch"; exit 1; }
+          done
+
+      - name: Push New Integration Branch to Repo
+        run: |
+          git push origin "${{ env.new_branch }}"
