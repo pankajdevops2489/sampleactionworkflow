@@ -6,7 +6,7 @@ on:
       confirm:
         description: 'Do you want to run this pipeline? (yes/no)'
         required: true
-        default: 'no'
+        default: 'yes'
 
 jobs:
   create-branch:
@@ -30,7 +30,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Listing open approved PRs..."
-          prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.number): \(.title) (\(.headRefName))"')
+          prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.number): \(.title) (\(.headRefName)) (\(.reviews[0].commit.oid))"')
           echo "$prs"
           echo "prs=$prs" >> $GITHUB_ENV  # Use environment files instead of set-output
 
@@ -44,10 +44,9 @@ jobs:
           fi
           IFS=$'\n'
           for pr in $prs; do
-            # Extracting the branch name correctly
-            pr_ref=$(echo "$pr" | awk -F ' ' '{print $NF}' | tr -d '()')  # Remove parentheses
-            echo "Cherry-picking changes from $pr_ref..."
-            git fetch origin "$pr_ref" && git cherry-pick "$pr_ref" || { echo "Cherry-pick failed for $pr_ref"; exit 1; }
+            pr_oid=$(echo "$pr" | awk -F ' ' '{print $NF}' | tr -d '()')  # Extract the commit OID
+            echo "Cherry-picking changes from commit $pr_oid..."
+            git cherry-pick "$pr_oid" || { echo "Cherry-pick failed for commit $pr_oid"; exit 1; }
           done
 
       - name: List Files
