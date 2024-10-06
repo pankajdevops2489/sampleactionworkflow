@@ -43,7 +43,7 @@ jobs:
             echo "oids=" >> $GITHUB_ENV
           else
             branches=$(echo "$prs" | cut -d ';' -f 1 | tr '\n' ';' | sed 's/;$//')  # Extract branch names
-            oids=$(echo "$prs" | cut -d ';' -f 2 | tr '\n' ';' | sed 's/;$//')  # Extract OIDs
+            oids=$(echo "$prs" | cut -d ';' -f 2 | tr '\n' ';' | sed 's/;$//;s/^[ \t]*//;s/[ \t]*$//')  # Extract OIDs and trim whitespace
             echo "branches=${branches}" >> $GITHUB_ENV
             echo "oids=${oids}" >> $GITHUB_ENV
             echo "List of branches: ${branches}"
@@ -70,9 +70,9 @@ jobs:
             echo "Fetching branch $pr_branch..."
             git fetch origin "$pr_branch"  # Fetch the branch
             echo "Cherry-picking changes from commit $pr_oid..."
+            ls  # List files for debugging
             git cherry-pick "$pr_oid" || { echo "Cherry-pick failed for commit $pr_oid"; exit 1; }
-            ls
           done
 
-      - name: List Files
+      - name: List Files After Cherry-Pick
         run: ls
