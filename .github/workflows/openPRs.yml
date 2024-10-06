@@ -43,7 +43,7 @@ jobs:
             echo "oids=" >> $GITHUB_ENV
           else
             branches=$(echo "$prs" | cut -d ';' -f 1 | tr '\n' ';' | sed 's/;$//')  # Extract branch names
-            oids=$(echo "$prs" | cut -d ';' -f 2 | tr '\n' ';' | sed 's/;$//;s/^[ \t]*//;s/[ \t]*$//')  # Extract OIDs and trim whitespace
+            oids=$(echo "$prs" | cut -d ';' -f 2 | tr '\n' ';' | sed 's/;$//;s/[[:space:]]//g')  # Extract OIDs and trim whitespace
             echo "branches=${branches}" >> $GITHUB_ENV
             echo "oids=${oids}" >> $GITHUB_ENV
             echo "List of branches: ${branches}"
