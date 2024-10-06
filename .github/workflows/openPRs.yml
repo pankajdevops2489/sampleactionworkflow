@@ -55,6 +55,7 @@ jobs:
           fi
           IFS=' '  # Use space as a delimiter
           for pr in $prs; do
+            ls
             pr_branch=$(echo "$pr" | awk -F ' ' '{print $1}' | tr -d '()')  # Extract the headRefName
             pr_oid=$(echo "$pr" | awk -F ' ' '{print $(NF)}' | tr -d '()')  # Extract the commit OID
             echo "Fetching branch $pr_branch..."
