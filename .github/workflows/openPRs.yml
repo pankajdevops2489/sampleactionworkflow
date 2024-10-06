@@ -40,8 +40,8 @@ jobs:
             echo "No open approved PRs found."
             echo "prs=" >> $GITHUB_ENV  # Set an empty value if no PRs found
           else
-            echo "$prs" > prs_list.txt  # Store PRs without prefixes
-            echo "prs=$(cat prs_list.txt)" >> $GITHUB_ENV  # Set prs environment variable
+            echo "$prs" > prs_list.txt  # Store PRs in a temporary file
+            echo "prs=$(cat prs_list.txt | tr '\n' ' ')" >> $GITHUB_ENV  # Set prs environment variable, replacing newlines with spaces
             echo "List of PRs: $(cat prs_list.txt)"
           fi
 
@@ -53,7 +53,7 @@ jobs:
             echo "No open approved PRs found."
             exit 0  # Exit gracefully if no PRs
           fi
-          IFS=$'\n'  # Use newline as a delimiter for multi-line input
+          IFS=' '  # Use space as a delimiter
           for pr in $prs; do
             pr_branch=$(echo "$pr" | awk -F ' ' '{print $1}' | tr -d '()')  # Extract the headRefName
             pr_oid=$(echo "$pr" | awk -F ' ' '{print $NF}' | tr -d '()')  # Extract the commit OID
