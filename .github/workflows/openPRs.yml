@@ -44,7 +44,10 @@ jobs:
           fi
           IFS=$'\n'
           for pr in $prs; do
+            pr_branch=$(echo "$pr" | awk -F ' ' '{print $(NF-1)}' | tr -d '()')  # Extract the headRefName
             pr_oid=$(echo "$pr" | awk -F ' ' '{print $NF}' | tr -d '()')  # Extract the commit OID
+            echo "Fetching branch $pr_branch..."
+            git fetch origin "$pr_branch"  # Fetch the branch
             echo "Cherry-picking changes from commit $pr_oid..."
             git cherry-pick "$pr_oid" || { echo "Cherry-pick failed for commit $pr_oid"; exit 1; }
           done
