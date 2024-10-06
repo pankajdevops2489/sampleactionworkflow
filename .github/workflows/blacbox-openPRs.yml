@@ -1,0 +1,57 @@
+name: Auto-Approved PRs Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Target branch name'
+        required: true
+        default: main
+
+jobs:
+  auto-approved-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get open approved PRs
+        id: approved_prs
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const approvedPRs = await github.pulls.getAll({
+              owner,
+              repo,
+              state: 'open',
+              status: 'APPROVED',
+              per_page: 100,
+            });
+            return approvedPRs.data.map(pr => ({
+              number: pr.number,
+              title: pr.title,
+              head: pr.head.sha,
+            }));
+
+      - name: List open approved PRs
+        env:
+          APPROVED_PRS: ${{ steps.approved_prs.outputs.result }}
+        run: |
+          echo "Open approved PRs:"
+          for pr in ${APPROVED_PRS//,/ }; do
+            echo "  - $pr"
+          done
+
+      - name: Cherry-pick open approved PRs
+        env:
+          APPROVED_PRS: ${{ steps.approved_prs.outputs.result }}
+        run: |
+          for pr in ${APPROVED_PRS//,/ }; do
+            git cherry-pick -x $pr.head
+          done
+          
+      - name: List Files
+        run: ls
