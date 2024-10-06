@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: 'main'  # Replace with your release branch name
+          fetch-depth: 0  # Fetch all history for all branches
 
       - name: Set up GitHub CLI
         run: |
@@ -55,10 +56,12 @@ jobs:
           fi
           IFS=$'\n'  # Use newline as a delimiter
           for pr in $prs; do
+            ls
             pr_branch=$(echo "$pr" | awk -F ' ' '{print $1}' | tr -d '()')  # Extract the headRefName
             pr_oid=$(echo "$pr" | awk -F ' ' '{print $(NF)}' | tr -d '()')  # Extract the commit OID
             echo "Fetching branch $pr_branch..."
             git fetch origin "$pr_branch"  # Fetch the branch
+            git fetch origin "$pr_oid"  # Ensure the commit is fetched
             echo "Cherry-picking changes from commit $pr_oid..."
             git cherry-pick "$pr_oid" || { echo "Cherry-pick failed for commit $pr_oid"; exit 1; }
           done
