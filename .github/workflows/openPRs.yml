@@ -24,6 +24,11 @@ jobs:
           echo "Setting up GitHub CLI"
           sudo apt-get install gh -y  # Install GitHub CLI if not already installed
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: List Open Approved PRs
         id: list_prs
         env:
