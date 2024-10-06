@@ -1,0 +1,35 @@
+name: Manual Actions Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Do you want to run this pipeline? (yes/no)'
+        required: true
+        default: 'no'
+
+jobs:
+  create-branch:
+    if: inputs.confirm == 'yes'  # Proceed only if 'yes' is selected
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Release Branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'  # Replace with your release branch name
+
+      - name: Get Approved Pull Requests
+        id: get_prs
+        run: |
+          echo "::set-output name=pr_refs::$(gh pr list --state merged --base release-branch-name --json headRef --jq '.[].headRef' | tr '\n' ' ')"
+
+      - name: Checkout Approved PRs
+        run: |
+          pr_refs=${{ steps.get_prs.outputs.pr_refs }}
+          for pr_ref in $pr_refs; do
+            git fetch origin $pr_ref && git checkout $pr_ref
+          done
+
+      - name: List Files
+        run: ls
