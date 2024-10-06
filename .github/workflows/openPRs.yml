@@ -36,8 +36,14 @@ jobs:
         run: |
           echo "Listing open approved PRs..."
           prs=$(gh pr list --state open --json number,title,headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.number): \(.title) (\(.headRefName)) (\(.reviews[0].commit.oid))"')
-          echo "$prs"
-          echo "prs=$prs" >> $GITHUB_ENV  # Use environment files instead of set-output
+          if [ -z "$prs" ]; then
+            echo "No open approved PRs found."
+            echo "prs=" >> $GITHUB_ENV  # Set an empty value if no PRs found
+          else
+            echo "$prs" | sed 's/^/pr_/' | tr '\n' ' ' > prs_list.txt  # Prefix each line for unique keys
+            echo "prs=$(cat prs_list.txt)" >> $GITHUB_ENV  # Set prs environment variable
+            echo "List of PRs: $(cat prs_list.txt)"
+          fi
 
       - name: Checkout or Cherry-Pick PRs
         id: cherry_pick
@@ -47,7 +53,7 @@ jobs:
             echo "No open approved PRs found."
             exit 0  # Exit gracefully if no PRs
           fi
-          IFS=$'\n'
+          IFS=' '  # Use space as a delimiter
           for pr in $prs; do
             pr_branch=$(echo "$pr" | awk -F ' ' '{print $(NF-1)}' | tr -d '()')  # Extract the headRefName
             pr_oid=$(echo "$pr" | awk -F ' ' '{print $NF}' | tr -d '()')  # Extract the commit OID
