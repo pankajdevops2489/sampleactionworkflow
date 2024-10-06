@@ -69,8 +69,8 @@ jobs:
           for pr_branch in "${branch_array[@]}"; do
             echo "Fetching branch $pr_branch..."
             git fetch origin "$pr_branch"  # Fetch the branch
-            echo "Merging changes from $pr_branch into ${{ env.new_branch }}..."
-            git merge "$pr_branch" || { echo "Merge failed for branch $pr_branch"; exit 1; }
+            echo "Merging changes from origin/$pr_branch into ${{ env.new_branch }}..."
+            git merge "origin/$pr_branch" || { echo "Merge failed for branch $pr_branch"; exit 1; }
           done
 
       - name: Push New Integration Branch to Repo
