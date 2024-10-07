@@ -12,6 +12,13 @@ permissions:
   contents: write  # Allow write access to the repository contents
 
 jobs:
+  autoupdate:
+    name: autoupdate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: chinthakagodawita/autoupdate@v1.7.0
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
   merge-approved-prs:
     if: inputs.confirm == 'yes'  # Proceed only if 'yes' is selected
     runs-on: ubuntu-latest
