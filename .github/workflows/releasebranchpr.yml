@@ -46,6 +46,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set the GH_TOKEN
         run: |
           echo "Listing open approved PRs..."
+          gh pr list --state open
           prs=$(gh pr list --state open --json headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.headRefName)"')
           if [ -z "$prs" ]; then
             echo "No open approved PRs found."
