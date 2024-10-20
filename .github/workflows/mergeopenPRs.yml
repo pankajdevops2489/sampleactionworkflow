@@ -32,8 +32,9 @@ jobs:
         run: | 
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}" 
           target_branch="${{ github.event.inputs.target_branch }}" 
-          prs=$(gh pr list --base $target_branch --state open --json number,headRefName --jq '.[].number') 
-          
+          #prs=$(gh pr list --base $target_branch --state open --json number,headRefName --jq '.[].number') 
+          prs=$(gh pr list --state open --json headRefName,reviews --jq '.[] | select(.reviews | length > 0 and any(.state == "APPROVED")) | "\(.headRefName)"')
+
           if [ -z "$prs" ]; then 
             echo "No open PRs found targeting branch $target_branch." 
             exit 0 
