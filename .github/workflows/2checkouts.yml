@@ -1,0 +1,54 @@
+name: 2checkout
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  build-and-test:
+    name: Checkout code from PR
+    # if: github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code from release branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'release'
+
+      - name: List all
+        run: |
+          echo "Running unit tests"
+          ls
+
+      - name: Checkout PR Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          
+      - name: List all
+        run: |
+          echo "Running unit tests"
+          ls
+
+  build-push-docker-image:
+    runs-on: ubuntu-latest
+    # needs: [build-and-test]   
+    steps:   
+      - name: Checkout code from release branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'release'
+
+      - name: Build Image Tag
+        run: |
+          ls -lrth
+          echo "Created docker image"
+
+  deploy_to_prod:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-push-docker-image]
+    steps:
+      - name: Deploy to Prod Environment
+        run: |
+          echo "Deploying to Prod Environment"
