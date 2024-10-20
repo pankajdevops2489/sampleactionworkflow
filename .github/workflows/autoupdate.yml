@@ -1,0 +1,24 @@
+name: Autoupdate branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Do you want to run this pipeline? (yes/no)'
+        required: true
+        default: 'yes'
+        type: string
+    
+
+permissions:
+  contents: write  # Allow write access to the repository contents
+
+jobs:
+  autoupdate:
+    name: autoupdate
+    if: ${{ github.event.inputs.confirm == 'yes' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: chinthakagodawita/autoupdate@v1.7.0
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
