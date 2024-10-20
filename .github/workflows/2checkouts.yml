@@ -3,7 +3,9 @@ name: 2checkout
 on:
   pull_request_review:
     types: [submitted]
-
+permissions:
+  contents: write
+  
 jobs:
   build-and-test:
     name: Checkout code from PR
@@ -32,6 +34,8 @@ jobs:
           ls
 
       - name: Merge PR
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --merge --auto
           
