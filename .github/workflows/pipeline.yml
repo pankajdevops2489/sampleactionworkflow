@@ -5,7 +5,7 @@ on:
     types: [submitted]
 
 jobs:
-  build-and-test:
+  Checkout:
     runs-on: ubuntu-latest
     if: ${{ github.event.review.state == 'approved' }}
     env:
@@ -22,8 +22,8 @@ jobs:
 
   build-push-docker-image:
     runs-on: ubuntu-latest
-    needs: build-and-test
-    if: ${{ github.event.pull_request.base.ref == 'branch1-dev' || github.event.pull_request.base.ref == 'branch2-stage' || github.event.pull_request.base.ref == 'branch3-prod' }}
+    needs: Checkout
+    if: ${{ github.event.pull_request.base.ref == 'dev'}}
 
     steps:
       - name: Checkout Source Code
@@ -36,11 +36,12 @@ jobs:
           echo "Building and pushing the image for ${{ github.event.pull_request.base.ref }}"
             
   deploy:
+    name: Deploying on ${{ github.event.pull_request.base.ref }}
     runs-on: ubuntu-latest
-    needs: build-push-docker-image
-    if: ${{ github.event.pull_request.base.ref == 'branch1-dev' || github.event.pull_request.base.ref == 'branch2-stage' || github.event.pull_request.base.ref == 'branch3-prod' }}
+    needs: Checkout
+    if: ${{ github.event.pull_request.base.ref == 'dev' || github.event.pull_request.base.ref == 'stage' || github.event.pull_request.base.ref == 'prod' }}
     
     steps:
-      - name: Deploy
+      - name: Deploy to ${{ github.event.pull_request.base.ref }}
         run: |
           echo "Deploying to ${{ github.event.pull_request.base.ref }}"
