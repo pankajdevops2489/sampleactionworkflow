@@ -33,16 +33,17 @@ jobs:
           echo "Running unit tests"
           ls
 
-      - name: Merge PR
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+      # - name: Merge PR
+      #   env:
+      #     GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+      #   run: |
+      #     # gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+      #     git merge --no-ff "origin/${{ github.event.pull_request.head.ref }}"
           
-      - name: List all
-        run: |
-          echo "Running unit tests"
-          ls
+      # - name: List all
+      #   run: |
+      #     echo "Running unit tests"
+      #     ls
   build-push-docker-image:
     runs-on: ubuntu-latest
     needs: [build-and-test]   
