@@ -23,21 +23,23 @@ jobs:
           echo "Running unit tests"
           ls
 
-      - name: Checkout PR Code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+      # - name: Checkout PR Code
+      #   uses: actions/checkout@v4
+      #   with:
+      #     ref: ${{ github.event.pull_request.head.sha }}
           
-      - name: List all
-        run: |
-          echo "Running unit tests"
-          ls
+      # - name: List all
+      #   run: |
+      #     echo "Running unit tests"
+      #     ls
 
-      - name: Merge PR
+      - name: Cherry Pick PR
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+          # gh pr merge ${{ github.event.pull_request.number }} --merge --auto
+          git fetch origin
+          git cherry-pick ${{ github.event.pull_request.head.sha }}
           
       - name: List all
         run: |
