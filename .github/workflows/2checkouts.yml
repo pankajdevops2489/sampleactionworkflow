@@ -33,14 +33,13 @@ jobs:
       #     echo "Running unit tests"
       #     ls
 
-      - name: Merge PR
+      - name: Cherry Pick PR
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           # gh pr merge ${{ github.event.pull_request.number }} --merge --auto
           git fetch origin
-          git checkout release
-          git merge --no-ff "origin/${{ github.event.pull_request.head.ref }}"
+          git cherry-pick ${{ github.event.pull_request.head.sha }}
           
       - name: List all
         run: |
