@@ -22,16 +22,6 @@ jobs:
         run: |
           echo "Running unit tests"
           ls
-
-      # - name: Checkout PR Code
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: ${{ github.event.pull_request.head.sha }}
-          
-      # - name: List all
-      #   run: |
-      #     echo "Running unit tests"
-      #     ls
       - name: Configure Git 
         run: | 
           git config --global user.name "github-actions[bot]" 
