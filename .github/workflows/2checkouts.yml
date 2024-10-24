@@ -22,18 +22,25 @@ jobs:
         run: |
           echo "Running unit tests"
           ls
+          
       - name: Configure Git 
         run: | 
           git config --global user.name "github-actions[bot]" 
           git config --global user.email "github-actions[bot]@users.noreply.github.com" 
 
-      - name: Cherry Pick PR
+      - name: Fetch PR commits
+        run: |
+          git fetch origin
+          git log --pretty=format:"%H" origin/${{ github.event.pull_request.head.ref }} > pr_commits.txt
+          cat pr_commits.txt | tac > reverse_commits.txt
+
+      - name: Cherry Pick PR in Reverse Order
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          # gh pr merge ${{ github.event.pull_request.number }} --merge --auto
-          git fetch origin
-          git cherry-pick ${{ github.event.pull_request.head.sha }}
+          while IFS= read -r commit; do
+            git cherry-pick $commit || git cherry-pick --abort
+          done < reverse_commits.txt
           
       - name: List all
         run: |
