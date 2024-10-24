@@ -5,7 +5,7 @@ on:
     types: [submitted]
 permissions:
   contents: write
-  
+
 jobs:
   build-and-test:
     name: Checkout code from PR
@@ -18,9 +18,9 @@ jobs:
         with:
           ref: 'release'
 
-      - name: List all
+      - name: List all files
         run: |
-          echo "Running unit tests"
+          echo "Listing files"
           ls
           
       - name: Configure Git 
@@ -28,24 +28,30 @@ jobs:
           git config --global user.name "github-actions[bot]" 
           git config --global user.email "github-actions[bot]@users.noreply.github.com" 
 
-      - name: Fetch PR commits
+      - name: Install GitHub CLI
         run: |
-          git fetch origin
-          git log --pretty=format:"%H" origin/${{ github.event.pull_request.head.ref }} > pr_commits.txt
-          cat pr_commits.txt | tac > reverse_commits.txt
+          sudo apt-get install -y gh
 
-      - name: Cherry Pick PR in Reverse Order
+      - name: Fetch PR commits using gh CLI
+        run: |
+          # Fetch the commit SHA for the PR in the correct order
+          gh pr view ${{ github.event.pull_request.number }} --repo pankajdevops2489/sampleactionworkflow --json commits --jq '.commits[] | "\(.oid)"' > commits.txt
+          cat commits.txt
+
+      - name: Cherry Pick PR commits in order
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           while IFS= read -r commit; do
+            echo "Cherry-picking commit: $commit"
             git cherry-pick $commit || git cherry-pick --abort
-          done < reverse_commits.txt
+          done < commits.txt
           
-      - name: List all
+      - name: List all files again
         run: |
-          echo "Running unit tests"
+          echo "Listing files after cherry-pick"
           ls
+          
   build-push-docker-image:
     runs-on: ubuntu-latest
     needs: [build-and-test]   
