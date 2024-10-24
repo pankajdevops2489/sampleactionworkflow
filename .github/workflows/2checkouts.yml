@@ -33,6 +33,8 @@ jobs:
           sudo apt-get install -y gh
 
       - name: Fetch PR commits using gh CLI
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           # Fetch the commit SHA for the PR in the correct order
           gh pr view ${{ github.event.pull_request.number }} --repo pankajdevops2489/sampleactionworkflow --json commits --jq '.commits[] | "\(.oid)"' > commits.txt
