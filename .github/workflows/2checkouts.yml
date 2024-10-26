@@ -37,7 +37,7 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           # Fetch the PR's head branch commits
-          gh pr view ${{ github.event.pull_request.number }} --repo pankajdevops2489/sampleactionworkflow --json commits --jq '.commits[] | "\(.oid)"' > commits.txt
+          gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.event.repository.name }} --json commits --jq '.commits[] | "\(.oid)"' > commits.txt
           cat commits.txt
 
       - name: Fetch the PR's head branch
