@@ -24,7 +24,7 @@ jobs:
         run: |
           echo "Setting up GitHub CLI"
           sudo apt-get install gh -y  # Install GitHub CLI if not already installed
-
+          echo ${{ github.repository }}
       - name: Configure Git
         run: |
           git config --global user.email "github-actions@github.com"
