@@ -1,0 +1,92 @@
+#DEV
+name:  new workflow to deploy dev environament
+
+on:
+  push:
+   branches:
+    - dev
+env:
+  REGISTRY: artifactory-mb.harman.com:5036
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      checks: write 
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: ./packages/dashboard-frontend-rd
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+         node-version: '16'
+         cache: yarn
+
+      - name: Install dependencies
+        run: yarn install
+   
+      - name: Build Source
+        run: yarn build
+            
+      - name: Run Lint
+        run: yarn run lint:check
+
+      - name: Run Unit Test
+        run: yarn run test:coverage
+    
+  build-push-docker-image:
+      runs-on: sdvtc-runner
+      needs: build-and-test
+      outputs:
+        IMAGE_TAG: ${{ steps.imagetag.outputs.IMAGE_TAG }}
+      
+      steps:
+       - name: Checkout source code
+         uses: actions/checkout@v4
+         with:
+          ref: ${{ github.event.pull_request.head.sha }}
+        
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+      
+       - name: Login to Registry
+         uses: docker/login-action@v3
+         with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+       - name: Build Image Tag
+         id: imagetag
+         run: |
+            IMAGE_TAG=$(date +'%Y%m%d')_develop_${{ github.run_number}}
+            echo ${IMAGE_TAG}
+            echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+       
+       - name: Build Docker Image and push to Registry
+         run: |
+            docker build . -f build/dockerfiles/Dockerfile -t ${{env.REGISTRY}}/eclipse-che/che-dashboard:${{steps.imagetag.outputs.IMAGE_TAG}}
+            docker image push ${{env.REGISTRY}}/eclipse-che/che-dashboard:${{steps.imagetag.outputs.IMAGE_TAG}}
+            #docker image push ${{env.REGISTRY}}/eclipse-che/che-dashboard:latest
+            docker rmi -f ${{env.REGISTRY}}/eclipse-che/che-dashboard:${{steps.imagetag.outputs.IMAGE_TAG}}
+            #docker rmi -f ${REGISTRY}/eclipse-che/che-dashboard:latest
+            docker logout    
+
+
+  deploy_to_dev:
+    runs-on: sdvtc-runner-016
+    needs: [build-and-test, build-push-docker-image]
+    steps:
+      - name: Deploy to Dev Environment
+        run: |
+          echo "Deploying to Dev Environment"
+          kubectl patch checluster/eclipse-che --patch '{"spec": {"components": {"dashboard": {"deployment": {"containers": [{"image": "${{ env.REGISTRY }}/eclipse-che/che-dashboard:${{ needs.build-push-docker-image.outputs.IMAGE_TAG }}" }]}}}}}' --type=merge -n eclipse-che
