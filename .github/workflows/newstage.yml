@@ -57,7 +57,17 @@ jobs:
         run: |
           while IFS= read -r commit; do
             echo "Cherry-picking commit: $commit"
-            git cherry-pick $commit || git cherry-pick --abort
+            
+            # Check if the commit is a merge commit
+            commit_type=$(git log --format=%P -n 1 $commit)
+            
+            if [[ $commit_type == *" "* ]]; then
+              echo "Merge commit detected. Using -m 1 for cherry-pick."
+              git cherry-pick -m 1 $commit || git cherry-pick --abort
+            else
+              # Regular commit
+              git cherry-pick $commit || git cherry-pick --abort
+            fi
           done < commits.txt
           
       - name: List files after cherry-pick
