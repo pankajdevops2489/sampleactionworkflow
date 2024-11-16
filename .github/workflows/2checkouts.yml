@@ -3,39 +3,66 @@ name: 2checkout
 on:
   pull_request_review:
     types: [submitted]
+permissions:
+  contents: write
 
 jobs:
   build-and-test:
     name: Checkout code from PR
-    # if: github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
+    if: github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'release' && github.event.pull_request.head.ref == 'dev'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code from release branch
+      - name: Checkout release branch
         uses: actions/checkout@v4
         with:
           ref: 'release'
 
-      - name: List all
+      - name: List files in the release branch
         run: |
-          echo "Running unit tests"
+          echo "Listing files in release branch"
           ls
-
-      - name: Checkout PR Code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
           
-      - name: List all
-        run: |
-          echo "Running unit tests"
-          ls
+      - name: Configure Git 
+        run: | 
+          git config --global user.name "github-actions[bot]" 
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" 
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+
+      - name: Fetch PR commits using gh CLI
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          # Fetch the PR's head branch commits
+          gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json commits --jq '.commits[] | "\(.oid)"' > commits.txt
+          cat commits.txt
+
+      - name: Fetch the PR's head branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.head.ref }}:$GITHUB_HEAD_REF
+
+      - name: Cherry Pick PR commits in order
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          while IFS= read -r commit; do
+            echo "Cherry-picking commit: $commit"
+            git cherry-pick $commit || git cherry-pick --abort
+          done < commits.txt
+          
+      - name: List files after cherry-pick
+        run: |
+          echo "Listing files after cherry-pick"
+          ls
+          
   build-push-docker-image:
     runs-on: ubuntu-latest
-    # needs: [build-and-test]   
+    needs: [build-and-test]   
     steps:   
-      - name: Checkout code from release branch
+      - name: Checkout release branch
         uses: actions/checkout@v4
         with:
           ref: 'release'
