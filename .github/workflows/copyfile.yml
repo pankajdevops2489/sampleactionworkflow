@@ -23,7 +23,7 @@ jobs:
         repository: pankajdevops2489/temptestrepo
         ref: main
         path: ./sampletestfolder
-        # token: ${{ secrets.MY_CUSTOM_TOKEN }}
+        token: ${{ secrets.MYPAT }}
     - name: check files
       run: |
           ls
