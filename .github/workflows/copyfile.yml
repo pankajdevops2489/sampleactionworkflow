@@ -20,9 +20,10 @@ jobs:
     - name: Check out remote another
       uses: actions/checkout@v4.2.2
       with:
-        repository: temptestrepo
+        repository: pankajdevops2489/temptestrepo
+        ref: main
         path: ./sampletestfolder
-        token: ${{ secrets.MY_CUSTOM_TOKEN }}
+        # token: ${{ secrets.MY_CUSTOM_TOKEN }}
     - name: check files
       run: |
           ls
