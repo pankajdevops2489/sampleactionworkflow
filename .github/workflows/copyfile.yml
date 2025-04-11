@@ -1,0 +1,25 @@
+name: Copy file from repo
+
+# only run this workflow when the openapi file has changed on the master branch
+on: 
+  push:
+    branches: 
+      - main
+  
+
+jobs:
+  copy_openapi_file_to_notehub_js: 
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out original
+      uses: actions/checkout@v4.2.2
+    - name: Check out remote another
+      uses: actions/checkout@v4.2.2
+      with:
+        repository: pankajdevops2489/temptestrepo
+        path: ./sampletestfolder
+        token: ${{ secrets.MY_CUSTOM_TOKEN }}
+    - name: check files
+      run: |
+          ls
+          pwd
